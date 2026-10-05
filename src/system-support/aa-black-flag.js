@@ -14,6 +14,7 @@ export function systemHooks() {
         
         const overrideNames = activity?.name && !["heal", "summon"].includes(activity?.name?.trim()) ? [activity.name] : []
         
+        debug("Attack rolled, checking for animations");
         const handler = await AAHandler.make(await getRequiredData({
             item,
             actor: item.parent,
@@ -35,6 +36,9 @@ export function systemHooks() {
     Hooks.on("blackFlag.postCreateActivationMessage", async (activity, message) => {
         if (activity?.description?.chatFlavor?.includes("[noaa]")) return
         
+        // We don't need to animate attacks until they are rolled
+        if (activity?.type === "attack") return;
+
         const item = activity?.item
         if (!item) return
         
@@ -57,24 +61,28 @@ export function systemHooks() {
         trafficCop(handler)
     })
     
-    Hooks.on("createMeasuredTemplate", async (template, data, userId) => {
-        if (userId !== game.user.id) return
-        
-        const activity = fromUuidSync(template.flags?.[game.system.id]?.origin) ?? null
+    /**
+     * A hook event that fires after a template are created for an Activity.
+     * @function blackFlag.postCreateMeasuredTemplate
+     * @memberof hookEvents
+     * @param {Activity} activity - Activity for which the template is being placed.
+     * @param {RegionDocument[]} templates - The regions that were created.
+     */
+    Hooks.on("blackFlag.postCreateMeasuredTemplate", async (activity, created) => {
         if (!activity) return
-        
         if (activity?.description?.chatFlavor?.includes("[noaa]")) return
         
         const item = activity?.item
         if (!item) return
         
+        debug("Template placed, checking for animations")
         const overrideNames = activity?.name && !["heal", "summon"].includes(activity?.name?.trim()) ? [activity.name] : []
         
         const handler = await AAHandler.make(await getRequiredData({
             item,
             actor: item.parent,
             activity,
-            templateData: template,
+            templateData: created[0],
             roll: activity,
             isTemplate: true,
             overrideNames

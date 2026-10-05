@@ -26,7 +26,7 @@ export async function melee(handler, animationData) {
     if (data.meleeSwitch.options.switchType === "on") {
         range = aaRangeWeapons.includes(data.video.animation) && !data.video.customPath ? await buildFile("range", data.video, false, { isReturnable: true }) : {};
     } else if (data.meleeSwitch.options.switchType === "custom") {
-        range = !data.meleeSwitch?.video?.customPath ? await buildFile("range", data.meleeSwitch.video, data.meleeSwitch.video.customPath, { isReturnable: true }) : {};
+        range = await buildFile("range", data.meleeSwitch.video, data.meleeSwitch.video.customPath, { isReturnable: true });
     }
 
     let switchDistance = 5;
@@ -100,7 +100,9 @@ export async function melee(handler, animationData) {
             if (data.options.elevation === 0) {
                 meleeSeq.belowTokens(true)
             } else {
-                meleeSeq.elevation(handler.elevation(sourceToken, data.options.isAbsolute, data.options.elevation), { absolute: data.options.isAbsolute })
+                const sourceLevel = (sourceToken?.document ?? sourceToken)?.level ?? canvas.level;
+                const targetLevel = (currentTarget?.token?.document ?? currentTarget?.token)?.level ?? canvas.level;
+                meleeSeq.onLevels([sourceLevel, targetLevel]);
             }
             meleeSeq.zIndex(data.options.zIndex)
             if (data.options.tint) {
@@ -145,7 +147,9 @@ export async function melee(handler, animationData) {
             if (data.options.elevation === 0) {
                 rangeSeq.belowTokens(true)
             } else {
-                rangeSeq.elevation(handler.elevation(sourceToken, data.options.isAbsolute, data.options.elevation), { absolute: data.options.isAbsolute })
+                const sourceLevel = (sourceToken?.document ?? sourceToken)?.level ?? canvas.level;
+                const targetLevel = (currentTarget?.token?.document ?? currentTarget?.token)?.level ?? canvas.level;
+                rangeSeq.onLevels([sourceLevel, targetLevel]);
             }
             rangeSeq.playbackRate(data.options.playbackRate)
             if (data.options.tint) {

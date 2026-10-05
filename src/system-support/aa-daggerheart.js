@@ -11,7 +11,7 @@
  */
 
 import { trafficCop } from "../router/traffic-cop.js";
-import { getRequiredData }  from "./getRequiredData.js";
+import { getRequiredData } from "./getRequiredData.js";
 import AAHandler from "../system-handlers/workflow-data.js";
 
 /**
@@ -37,30 +37,36 @@ async function handleChatMessageCreation(msg, _options, _userId) {
    if (!msg.isAuthor || !VALID_MESSAGE_TYPES.includes(msg.type)) return;
 
    const workflowData = msg.system ?? msg.flags?.daggerheart;
-
    if (!workflowData?.source?.item) return;
 
+   // Pull the item or action. If there is an action but no item, this is likely a basic attack
+   // Action names often don't have the context, so we prioritize the item unless it doesn't exist
    const { item: itemId, actor: actorUuid } = workflowData.source;
-
+   const action = workflowData.action;
    const actor = await fromUuid(actorUuid);
    const item = actor?.items.get(itemId);
-   if (!actor || !item)
-      return console.warn(
-         `Daggerheart Workflow: Could not find Item (${itemId}) or Actor (${actorUuid}) for ChatMessage.`,
-         {
-            msg,
-            actor,
-            item,
-         }
-      );
+   if (!actor) {
+      return console.warn(`Daggerheart Workflow: Could not find Actor (${actorUuid}) for ChatMessage.`, { msg });
+   } else if (!item && !action) {
+      return console.warn(`Daggerheart Workflow: Could not find Item (${itemId}) or action for ChatMessage.`, {
+         msg,
+         actor,
+         item,
+         action,
+      });
+   }
+
+   let aaItem = item ?? { name: action.name };
+
+   if (item?.system.actionsList.size > 1) {
+      aaItem.name = item.name + ": " + action.name;
+   }
 
    const compiledData = await getRequiredData({
-      item,
+      item: aaItem,
       actor,
       targets: Array.from(game.user.targets),
    });
-   
    const handler = await AAHandler.make(compiledData);
-
    trafficCop(handler);
 }

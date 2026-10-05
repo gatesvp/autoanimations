@@ -37,6 +37,7 @@ function funkyTest(msg) {
     const elActorID = element.querySelector("[data-actor-id]")?.getAttribute("data-actor-id");
     const elTokenUUID = element.querySelector("[data-token-uuid]")?.getAttribute("data-token-uuid");
     const elItemID = element.querySelector("[data-item-id]")?.getAttribute("data-item-id");
+    const elItemName = element.querySelector(".item-name")?.textContent;
 
     const systemFlags = msg.flags[game.system.id] || {};
     const flagItemID = systemFlags.itemId;
@@ -44,12 +45,44 @@ function funkyTest(msg) {
     const flagTokenUUID = systemFlags.tokenUuid;
     const flagItemUUID = systemFlags.itemUuid;
 
-
     const token = fromUuidSync(flagTokenUUID || elTokenUUID) || canvas.tokens.get(msg.speaker?.token);
-    let item = fromUuidSync(flagItemUUID || elItemUUID) || msg.item || msg.itemSource
+    const itemFromName = token?.actor?.items?.getName(elItemName);
+    let item = fromUuidSync(flagItemUUID || elItemUUID) || msg.item || msg.itemSource || itemFromName;
     const actor = item?.actor || token?.actor || game.actors.get(flagActorID || elActorID);
 
     if(!item) item = actor?.items.get(flagItemID || elItemID || msg.rolls?.[0]?.options?.itemId);
 
+    if(!item){
+        item = getItemFromChatMessageData(msg, actor, element);
+    }
+
     return {token, item, actor , itemId: item?.id, actorId: actor?.id, tokenId: token?.id};
+}
+
+function getItemFromChatMessageData(msg, actor, element){
+    const msgData = msg.toObject();
+    const mainTargetObject = msgData.flags[game.system.id] ?? {};
+    const secondaryTargetObject = msgData;
+    let bestMatch, goodMatch;
+    const mainTargetItemUUIDs = extractItemUUIDFromObject(mainTargetObject);
+    bestMatch = mainTargetItemUUIDs.find(uuid => uuid.includes(actor.id));
+    goodMatch = mainTargetItemUUIDs[0];
+    if(bestMatch) return fromUuidSync(bestMatch);
+    const allUUIDs = Array.from(element.querySelectorAll("[data-uuid]")).map(el => el.getAttribute("data-uuid")).filter(uuid => uuid.includes("Item."));
+    bestMatch = allUUIDs.find(uuid => uuid.includes(actor.id));
+    goodMatch ??= allUUIDs[0];
+    if(bestMatch) return fromUuidSync(bestMatch);
+    const secondaryTargetItemUUIDs = extractItemUUIDFromObject(secondaryTargetObject);
+    bestMatch = secondaryTargetItemUUIDs.find(uuid => uuid.includes(actor.id));
+    goodMatch ??= secondaryTargetItemUUIDs[0];
+    if(bestMatch) return fromUuidSync(bestMatch);
+    if(goodMatch) return fromUuidSync(goodMatch);
+    return null;
+}
+
+function extractItemUUIDFromObject(obj){
+    const flattened = foundry.utils.flattenObject(obj);
+    const values = Object.values(flattened);
+    const itemUUIDs = values.filter(value => typeof value === 'string' && value.includes('Item.'));
+    return itemUUIDs;
 }

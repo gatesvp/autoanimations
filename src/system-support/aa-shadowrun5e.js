@@ -25,7 +25,7 @@ const TEST = {
     - For spells, we use the same trick with the magic school as a fallback
  */
 async function checkChatMessage(msg) {
-    if (msg.user.id !== game.user.id || !AnimationState.enabled) {
+    if (msg.author.id !== game.user.id || !AnimationState.enabled) {
         return;
     }
 

@@ -42,7 +42,7 @@ export function systemHooks() {
         compiledData.hitTargets = checkOutcome(compiledData);
         runSF2e(compiledData)
     });
-    Hooks.on("createMeasuredTemplate", async (template, data, userId) => {
+    Hooks.on("createRegion", async (template, data, userId) => {
         if (userId !== game.user.id) { return };
         let compiledData = await getRequiredData({
             itemUuid: template.flags?.sf2e?.origin?.uuid,
@@ -84,7 +84,7 @@ async function templateAnimation(input) {
         }
     }
 
-    if (data.item.type === "weapon") {
+    if (input.item.type === "weapon") {
         const baseType = game.i18n.localize(CONFIG.PF2E.baseWeaponTypes[input.item.system?.baseType]);
         const group = game.i18n.localize(CONFIG.PF2E.weaponGroups[input.item.system?.group]);
         input.extraNames.push(baseType, group);

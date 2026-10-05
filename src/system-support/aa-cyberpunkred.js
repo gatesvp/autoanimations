@@ -10,7 +10,7 @@ export function systemHooks() {
 }
 
 async function checkChatMessage(msg) {
-    if (msg.user.id !== game.user.id) {
+    if (msg.author?.id !== game.user.id) {
         return;
     }
 
@@ -139,9 +139,9 @@ function extactData(msg) {
 
 function getDistance(token, target) {
     if (token.document) token = token.document;
-    const a = canvas.grid.measureDistance(token, target, {
+    const a = canvas.grid.measurePath([token, target], {
         gridSpaces: true,
-    });
+    }).distance;
 
     if (!game.settings.get("autoanimations", "useElevation")) return a;
     const b = token.elevation - target.document.elevation;

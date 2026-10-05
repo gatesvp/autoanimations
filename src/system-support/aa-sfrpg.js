@@ -32,7 +32,7 @@ export function systemHooks() {
     Hooks.on("damageRolled", async (data) => {
         if (!game.settings.get("autoanimations", "playonDamage") && data.item?.hasAttack) { return; }
         Hooks.once("createChatMessage", async (msg) => {
-            if (msg.user.id !== game.user.id) { return };
+            if (msg.author.id !== game.user.id) { return };
             let compiledData = await getRequiredData({item: data.item, tokenId: msg.speaker.token, actorId: msg.speaker.actor, workflow: data})
             runStarfinder(compiledData)
         });
@@ -40,7 +40,7 @@ export function systemHooks() {
     Hooks.on("attackRolled", async (data) => {
         if (game.settings.get("autoanimations", "playonDamage") && data.item?.hasDamage) { return; }
         Hooks.once("createChatMessage", async (msg) => {
-            if (msg.user.id !== game.user.id) { return };
+            if (msg.author.id !== game.user.id) { return };
             let compiledData = await getRequiredData({item: data.item, tokenId: msg.speaker.token, actorId: msg.speaker.actor, workflow: data})
             runStarfinder(compiledData)
         });

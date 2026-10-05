@@ -39,6 +39,9 @@ export async function teleportation(handler, animationData) {
     }
 
     let borderSeq = await new Sequence(handler.sequenceData)
+
+    const sourceLevel = (sourceToken?.document ?? sourceToken)?.level ?? canvas.level;
+    
     let borderEffect = borderSeq.effect()
         .fadeIn(500)
         .persist()
@@ -49,6 +52,8 @@ export async function teleportation(handler, animationData) {
         .forUsers(hideBorder)
         .name("teleportation")
         .opacity(0.75)
+        .onLevels(sourceLevel);
+
     if (borderType === "circle") {
         borderEffect.loopProperty("shapes.teleBorder", "scale.x", { from: 0.98, to: 1.02, duration: 1500, pingPong: true, ease: "easeInOutSine" })
         borderEffect.loopProperty("shapes.teleBorder", "scale.y", { from: 0.98, to: 1.02, duration: 1500, pingPong: true, ease: "easeInOutSine" })    
@@ -70,10 +75,9 @@ export async function teleportation(handler, animationData) {
                     elevation: parseFloat(response.flags.levels.elevation),
                 }
     
-                let topLeft = canvas.grid.getTopLeft(pos.x, pos.y);
+                let topLeft = canvas.grid.getTopLeftPoint({ x: pos.x, y: pos.y });
     
-                if (canvas.grid.measureDistance(sourceToken, { x: topLeft[0], y: topLeft[1] }, { gridSpaces: true }) <= data.options.range) {
-                    //console.log(canvas.grid.measureDistance(sourceToken, { x: topLeft[0], y: topLeft[1] }, {gridSpaces: true}))
+                if (canvas.grid.measurePath([sourceToken, topLeft], { gridSpaces: true }).distance <= data.options.range) {
                     if (data.options.checkCollision && testCollision(pos)) {
                         ui.notifications.error("Your Path is Blocked!! Try Again")
                         return getPositionFrom3D();
@@ -94,10 +98,9 @@ export async function teleportation(handler, animationData) {
         if (event.data.button !== 0) { return }
         pos = event.data.getLocalPosition(canvas.app.stage);
 
-        let topLeft = canvas.grid.getTopLeft(pos.x, pos.y);
+        let topLeft = canvas.grid.getTopLeftPoint({ x: pos.x, y: pos.y });
 
-        if (canvas.grid.measureDistance(sourceToken, { x: topLeft[0], y: topLeft[1] }, { gridSpaces: true }) <= data.options.range) {
-            //console.log(canvas.grid.measureDistance(sourceToken, { x: topLeft[0], y: topLeft[1] }, {gridSpaces: true}))
+        if (canvas.grid.measurePath([sourceToken, topLeft], { gridSpaces: true }).distance <= data.options.range) {
             if (data.options.checkCollision && testCollision(pos)) {
                 ui.notifications.error("Your Path is Blocked!! Try Again")
             } else {
@@ -110,21 +113,19 @@ export async function teleportation(handler, animationData) {
     });
 
     function testCollision(pos) {
-        let pointerCenter = {
-            x: canvas.grid.getCenter(pos.x, pos.y)[0],
-            y: canvas.grid.getCenter(pos.x, pos.y)[1],
-        };
+        let pointerCenter = canvas.grid.getCenterPoint({x: pos.x, y: pos.y});
         return sourceToken.checkCollision(pointerCenter)
     }
 
     async function deleteTemplatesAndMove() {
 
-        let gridPos = canvas.grid.getTopLeft(pos.x, pos.y);
+        let gridPos = canvas.grid.getTopLeftPoint({ x: pos.x, y: pos.y });
         let centerPos;
         if (canvas.scene.gridType === 0) {
-            centerPos = [gridPos[0] + sourceToken.w, gridPos[1] + sourceToken.w];
+            centerPos = [gridPos.x + sourceToken.w, gridPos.y + sourceToken.w];
         } else {
-            centerPos = canvas.grid.getCenter(pos.x, pos.y);
+            const center = canvas.grid.getCenterPoint({x: pos.x, y: pos.y});
+            centerPos = [center.x, center.y];
         }
 
         Sequencer.EffectManager.endEffects({ name: "teleportation" })
@@ -154,6 +155,7 @@ export async function teleportation(handler, animationData) {
             startEffect.fadeOut(data.start.options.fadeOut)
             startEffect.delay(data.start.options.delay)
             startEffect.playbackRate(data.start.options.playbackRate)
+            startEffect.onLevels(sourceLevel);
             //startEffect.randomRotation()
             if (data.start.options.isMasked) {
                 startEffect.mask(sourceToken)
@@ -171,6 +173,7 @@ export async function teleportation(handler, animationData) {
             betweenEffect.opacity(data.between.options.opacity)
             betweenEffect.stretchTo({ x: centerPos[0], y: centerPos[1] })
             betweenEffect.playbackRate(data.between.options.playbackRate)
+            betweenEffect.onLevels(sourceLevel);
         }
 
         // End Animation
@@ -184,6 +187,7 @@ export async function teleportation(handler, animationData) {
             endEffect.fadeIn(data.end.options.fadeIn)
             endEffect.fadeOut(data.end.options.fadeOut)
             endEffect.playbackRate(data.end.options.playbackRate)
+            endEffect.onLevels(sourceLevel);
             //endEffect.randomRotation()
             if (data.end.options.isMasked) {
                 endEffect.mask(sourceToken)
@@ -199,15 +203,11 @@ export async function teleportation(handler, animationData) {
         }
 
         // Move Token
-        let animSeq = aaSeq.animation()
-        animSeq.on(sourceToken)
-        //animSeq.opacity(data.start.options.alpha)
-        animSeq.delay(data.options.delayMove)
-        //animSeq.fadeOut(data.start.options.tokenOut)
-        if (data.options.teleport) {
-            animSeq.teleportTo({ x: gridPos[0], y: gridPos[1], elevation: pos.elevation } ,{ relativeToCenter: !canvas.scene.grid.type })
-        } else {
-            animSeq.moveTowards({ x: gridPos[0], y: gridPos[1], elevation: pos.elevation }, { relativeToCenter: !canvas.scene.grid.type })
+        if (!data.options.teleport) {
+            let animSeq = aaSeq.animation()
+            animSeq.on(sourceToken)
+            animSeq.delay(data.options.delayMove)
+            animSeq.moveTowards({ x: gridPos.x, y: gridPos.y, elevation: pos.elevation }, { relativeToCenter: !canvas.scene.grid.type })
             animSeq.moveSpeed(data.options.speed)
         }
         
@@ -230,7 +230,14 @@ export async function teleportation(handler, animationData) {
             handler.complileMacroSection(aaSeq, macro)
         }
 
-        aaSeq.play()
+        // Play Sequence
+        aaSeq.play().then(() => {
+            // Teleport Token
+            if (!data.options.teleport) return;
+            setTimeout(() => {
+                sourceToken.document.move([{ x: gridPos.x, y: gridPos.y }], { animate: false, constrainOptions: { ignoreWalls: true, ignoreCost: true, ignoreTokens: true } });
+            }, data.options.delayMove ?? 0);
+        });
 
     };
 }

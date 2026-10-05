@@ -16,6 +16,7 @@ export async function dualattach(handler, animationData) {
     async function cast() {
 
         let aaSeq = await new Sequence(handler.sequenceData);
+
         // Play Macro if Awaiting
         if (macro && macro.playWhen === "1" && !macro?.args?.warpgateTemplate) {
             handler.complileMacroSection(aaSeq, macro)
@@ -32,6 +33,9 @@ export async function dualattach(handler, animationData) {
         aaSeq.thenDo(function () {
             Hooks.callAll("aa.animationStart", sourceToken, handler.allTargets)
         })
+
+        const sourceLevel = (sourceToken?.document ?? sourceToken)?.level ?? canvas.level;
+
         for (let target of handler.allTargets) {
             let checkTarget = effectExists.filter(i => i.data.target.includes(target.id)).length > 0;
             if (!checkTarget) {
@@ -42,6 +46,9 @@ export async function dualattach(handler, animationData) {
                     .persist(true)
                     .playbackRate(data.options.playbackRate)
                     .origin(handler.itemUuid)
+
+                const targetLevel = (target?.token?.document ?? target?.token)?.level ?? canvas.level;
+                effect.onLevels([sourceLevel, targetLevel]);
 
                 if (data.options.elevation === 0) {
                     effect.belowTokens(true)

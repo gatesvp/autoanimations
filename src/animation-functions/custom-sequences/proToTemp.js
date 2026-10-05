@@ -9,13 +9,14 @@ export async function proToTemp(handler, animationData, templateDocument) {
     const targetFX = animationData.targetFX;
     const macro = animationData.macro;
 
-    const template = handler.templateData ? handler.templateData : templateDocument//canvas.templates.placeables[canvas.templates.placeables.length - 1];
+    const template = handler.templateData ? handler.templateData : templateDocument;
     const sourceToken = handler.sourceToken;
 
     let aaSeq = await new Sequence(handler.sequenceData)
     if (data.projectile.options.removeTemplate) {
         aaSeq.thenDo(function () {
-            canvas.scene.deleteEmbeddedDocuments("MeasuredTemplate", [template.id])
+            const docName = template?.documentName || "MeasuredTemplate";
+            canvas.scene.deleteEmbeddedDocuments(docName, [template.id]);
         })
     }
 
@@ -39,6 +40,9 @@ export async function proToTemp(handler, animationData, templateDocument) {
         .repeats(data.projectile.options.repeat, data.projectile.options.repeatDelay)
         .playbackRate(data.projectile.options.playbackRate)
         .waitUntilFinished(data.projectile.options.wait)
+
+    const sourceLevel = (sourceToken?.document ?? sourceToken)?.level ?? canvas.level;
+    effect1.onLevels(sourceLevel);
 
     if (data.projectile.options.elevation === 0) {
         effect1.belowTokens(true)
@@ -76,6 +80,8 @@ export async function proToTemp(handler, animationData, templateDocument) {
         .playbackRate(data.explosion.options.playbackRate)
         .waitUntilFinished(-750 + data.explosion.options.wait)
         .aboveLighting(data.explosion.options.aboveTemplate)
+
+    effect2.onLevels(sourceLevel);
 
     if (data.explosion.options.elevation === 0) {
         effect2.belowTokens(true)

@@ -6,7 +6,7 @@ import { getRequiredData }  from "./getRequiredData.js";
 
 export function systemHooks() {
     Hooks.on("createChatMessage", async (msg) => {
-        if (msg.user.id !== game.user.id) { return };
+        if (msg.author?.id !== game.user.id) { return };
         const flags = msg.flags?.["dark-heresy"] ?? {};
         if(!flags.rollData) return;
         const itemId = flags.rollData.itemId;
@@ -21,7 +21,7 @@ export function systemHooks() {
         checkCrit(flags.rollData)
     });
     Hooks.on("AutomatedAnimations-WorkflowStart", onWorkflowStart);
-    Hooks.on("createMeasuredTemplate", async (template, data, userId) => {
+    Hooks.on("createRegion", async (template, data, userId) => {
         if (userId !== game.user.id) { return };
         templateAnimation(await getRequiredData({itemUuid: template.flags?.["dark-heresy"]?.origin, templateData: template, workflow: template, isTemplate: true}))
     })

@@ -226,7 +226,8 @@ export async function ontoken(handler, animationData) {
         seq.file(bottomAnim)
         seq.opacity(data.options.opacity)
         seq.size(size, { gridUnits: true })
-        seq.elevation(token.document?.elevation - 1)
+        const sourceLevel = (token?.document ?? token)?.level ?? canvas.level;
+        seq.onLevels(sourceLevel);
         if (data.options.isMasked) {
             bottomEffect.mask(token)
         }
@@ -255,7 +256,8 @@ export async function ontoken(handler, animationData) {
         seq.file(data.path.filePath)
         seq.opacity(data.options.opacity)
         seq.size(size, { gridUnits: true })
-        seq.elevation(token.document?.elevation)
+        const sourceLevel = (token?.document ?? token)?.level ?? canvas.level;
+        seq.onLevels(sourceLevel);
         if (data.options.isMasked) {
             seq.mask(token)
         }
@@ -286,7 +288,8 @@ export async function ontoken(handler, animationData) {
         if (data.options.elevation === 0) {
             seq.belowTokens(true)
         } else {
-            seq.elevation(handler.elevation(token, data.options.isAbsolute, data.options.elevation), { absolute: data.options.isAbsolute })
+            const sourceLevel = (token?.document ?? token)?.level ?? canvas.level;
+            seq.onLevels(sourceLevel);
         }
         if (data.options.isMasked) {
             seq.mask(token)

@@ -973,6 +973,64 @@ class AAGameSettings extends TJSGameSettingsWithUI {
                }
             });
             break;
+         case 'black-flag':
+            settings.push({
+               namespace,
+               key: 'EnableCritical',
+               folder: game.system.title || game.system.name,
+               options: {
+                  name: 'autoanimations.settings.crithit_name',
+                  hint: 'autoanimations.settings.crithit_hint',
+                  scope: scope.world,
+                  type: Boolean,
+                  default: false,
+                  config: true
+               }
+            });
+
+            settings.push({
+               namespace,
+               key: 'CriticalAnimation',
+               folder: game.system.title || game.system.name,
+               options: {
+                  name: 'autoanimations.settings.crithitAnim_name',
+                  //name: 'Choose A File',
+                  scope: scope.world,
+                  config: true,
+                  type: String,
+                  default: "",
+                  filePicker: 'imagevideo'
+               }
+            });
+
+            settings.push({
+               namespace,
+               key: 'EnableCriticalMiss',
+               folder: game.system.title || game.system.name,
+               options: {
+                  name: 'autoanimations.settings.critmiss_name',
+                  hint: 'autoanimations.settings.critmiss_hint',
+                  scope: scope.world,
+                  type: Boolean,
+                  default: false,
+                  config: true
+               }
+            });
+
+            settings.push({
+               namespace,
+               key: 'CriticalMissAnimation',
+               folder: game.system.title || game.system.name,
+               options: {
+                  name: 'autoanimations.settings.critmissAnim_name',
+                  scope: scope.world,
+                  config: true,
+                  type: String,
+                  default: "",
+                  filePicker: 'imagevideo'
+               }
+            });
+            break;
          /* Considering options for changing 5e options on "How To Play" Animations
       default:
          settings.push({
